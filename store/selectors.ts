@@ -8,3 +8,5 @@ export const selectForecast = (state: RootState) =>
 
 export const selectUnit = (state: RootState) =>
     state.settings.unit;
+
+export const selectSettings = (state: RootState) => state.settings;

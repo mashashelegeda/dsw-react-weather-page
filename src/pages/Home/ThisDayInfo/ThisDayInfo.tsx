@@ -1,3 +1,4 @@
+import React from 'react';
 import s from './ThisDayInfo.module.scss';
 import { ThisDayItem } from './ThisDayItem';
 import type { Weather } from '../../../../store/types/types';
@@ -8,7 +9,7 @@ import { selectUnit } from '../../../../store/selectors';
 import { fetchCurrentWeather } from '../../../../store/thunxs/fetchCurrentWeather';
 
 interface Props {
-    weather: Weather;
+    weather: Weather | null;
 }
 
 export interface Item {
@@ -17,22 +18,29 @@ export interface Item {
     value: string;
 }
 
-
-const getWindDirection = (deg: number): string => {
+const getWindDirection = (deg: number) => {
     const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     const index = Math.round(deg / 45) % 8;
     return directions[index];
 };
 
-
 export const ThisDayInfo = ({ weather }: Props) => {
     const dispatch = useCustomDispatch();
     const unit = useCustomSelector(selectUnit);
+
+    if (!weather) return <div className={s.this_day_info}>Loading weather details...</div>;
+
+    const tempUnitSymbol = unit === 'metric' ? '°C' : '°F';
 
     const options = [
         { value: 'metric', label: 'Celsius' },
         { value: 'imperial', label: 'Fahrenheit' },
     ];
+
+    const handleChange = (option: any) => {
+        dispatch(setUnit(option.value));
+        dispatch(fetchCurrentWeather(weather.name));
+    };
 
     const colorStyles = {
         control: (styles: any) => ({
@@ -45,20 +53,17 @@ export const ThisDayInfo = ({ weather }: Props) => {
             fontSize: '16px',
             marginBottom: '20px',
         }),
+        option: (styles: any) => ({
+            ...styles,
+            fontSize: '14px',
+        }),
     };
-
-    const handleChange = (option: any) => {
-        dispatch(setUnit(option.value));
-        dispatch(fetchCurrentWeather(weather.name));
-    };
-
-    const tempUnitSymbol = unit === 'metric' ? '°C' : '°F';
 
     const items: Item[] = [
         {
             icon_id: 'temp',
             name: 'Temperature',
-            value: `${Math.round(weather.main.temp)}° – feels like ${Math.round(weather.main.feels_like)}°`,
+            value: `${Math.round(weather.main.temp)}${tempUnitSymbol} – feels like ${Math.round(weather.main.feels_like)}${tempUnitSymbol}`,
         },
         {
             icon_id: 'pressure',
@@ -87,25 +92,28 @@ export const ThisDayInfo = ({ weather }: Props) => {
         {
             icon_id: 'cloud',
             name: 'Cloudiness',
-            value: `${weather.clouds.all}%`,
+            value: `${weather.clouds?.all ?? 0}%`,
         },
-
+        {
+            icon_id: 'precipitation',
+            name: 'Precipitation probability',
+            value: 'Not available for current weather',
+        },
     ];
-
 
     return (
         <div className={s.this_day_info}>
-            <div className={s.this_day_info_items}>
-                <Select
-                    value={options.find(o => o.value === unit)}
-                    onChange={handleChange}
-                    options={options}
-                    styles={colorStyles}
-                    placeholder="Temperature scale"
-                />
+            <Select
+                value={options.find(o => o.value === unit)}
+                onChange={handleChange}
+                options={options}
+                styles={colorStyles}
+                placeholder="Temperature scale"
+            />
 
+            <div className={s.this_day_info_items}>
                 {items.map(item => (
-                    <ThisDayItem key={item.icon_id} item={item} />
+                    <ThisDayItem key={item.icon_id + item.name} item={item} />
                 ))}
             </div>
         </div>

@@ -6,7 +6,7 @@ import { fetchForecast } from '../../../../store/thunxs/fetchForecast';
 import { fetchCurrentWeather } from '../../../../store/thunxs/fetchCurrentWeather';
 import { useCustomDispatch } from '../../../hooks/store';
 import { useCustomSelector } from '../../../hooks/store';
-import { selectUnit } from '../../../../store/selectors';
+import { selectSettings, selectUnit } from '../../../../store/selectors';
 
 interface HeaderProps { }
 
@@ -14,7 +14,7 @@ export const Header = (props: HeaderProps) => {
     const dispatch = useCustomDispatch();
     const unit = useCustomSelector(selectUnit);
 
-    const options = [
+    const allCities = [
         { value: 'Warsaw', label: 'Warsaw' },
         { value: 'Krakow', label: 'Kraków' },
         { value: 'Wroclaw', label: 'Wrocław' },
@@ -26,7 +26,16 @@ export const Header = (props: HeaderProps) => {
         { value: 'Milan', label: 'Milan' },
     ];
 
+    const { favorites } = useCustomSelector(selectSettings);
+
+
+    const options = [
+        ...allCities.filter(city => favorites.includes(city.value)),
+        ...allCities.filter(city => !favorites.includes(city.value)),
+    ];
+
     const [selectedCity, setSelectedCity] = useState(options[2]);
+
 
     const colorStyles = {
         control: (styles: any) => ({
@@ -53,6 +62,8 @@ export const Header = (props: HeaderProps) => {
         dispatch(fetchForecast(option.value, unit));
 
     }
+
+
     return (
 
         <header className={s.header}>
